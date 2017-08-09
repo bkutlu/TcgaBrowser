@@ -9,6 +9,8 @@ ebiDat$Experiment.Accession <- sapply(ebiDat$Experiment.Accession, function (x){
 })
 
 NcbiDat <- readRDS('data/ncbiDat.rds')
+tcgaTumTypes <- readRDS('data/tcgaTumTypes.rds')
+
 
 library(ggplot2)
 library(dplyr)
@@ -38,13 +40,18 @@ plotTumor <- function (myData = myData, ploTitre = "", plotType = "boxplot"){
           legend.text = element_text(size = rel(0.6)),
           legend.title = element_blank(),
           axis.title.x=element_blank(),
-          plot.title = element_text(size = rel(2)))
+          plot.title = element_text(size = rel(1.2)))
   
   print(tumPlot)
 
   }# plotTumor
 
 server = function(input, output) {
+  
+  tumTitle <- reactive({
+    tcgaTumTypes %>% filter(Cohort == input$tumorType) %>% .[["Disease.Name"]]
+  })
+  
   
   output$EBI <- DT::renderDataTable(
     ebiDat <- DT::datatable(ebiDat, escape = FALSE)
@@ -56,13 +63,13 @@ server = function(input, output) {
   
   output$TCGA_tumor <- renderPlot({
     myDataSet <- filter(myDataSet, tumor == input$tumorType , goi == input$myGene)
-     plotTumor(myDataSet, ploTitre = "", plotType = "violin")
+     plotTumor(myDataSet, ploTitre = tumTitle(), plotType = "violin")
   })
   
   # 
   output$TCGA_tumor_box <- renderPlot({
     myDataSet <- filter(myDataSet, tumor == input$tumorType , goi == input$myGene)
-    plotTumor(myDataSet, ploTitre = "", plotType = "boxplot")
+    plotTumor(myDataSet, ploTitre = tumTitle(), plotType = "boxplot")
   })
   
   output$table <- renderTable({
